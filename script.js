@@ -1,107 +1,138 @@
-const operators = ['+', '-', '/', '*'];
-
-function add(number1, number2) {
-    let sum = parseFloat(Math.round(number1 + number2));
-    return sum;
+// Creating object for tracking values
+const calculator = {
+    displayValue: '0',
+    firstOperand: null,
+    waitingSecondOperand: false,
+    operator: null,
 }
 
-function divide(number1, number2) {
-    if(number2 === '0') {
-        return 'Error';
+
+function userInput(digit) {
+    // Unpack properties from calculator
+    const { displayValue, waitingSecondOperand } = calculator;
+
+    if (waitingSecondOperand === true) {
+        calculator.displayValue = digit;
+        calculator.waitingSecondOperand = false;
     }
     else {
-        let division = parseFLoat(Math.round((number1 / number2)));
-        return division;  
+        calculator.displayValue = displayValue === '0' ? digit : displayValue + digit;
     }
 }
 
-function substract(number1, number2) {
-    let subtraction = parseFloat(Math.round(number1 - number2));
-    return subtraction;
+// Function for populating and updating the display
+function updateDisplay() {
+    let display = document.getElementById('display');
+    display.value = calculator.displayValue;
 }
 
-function multiply(number1, number2) {
-    let multiplication = parseFloat(Math.round(number1 * number2));
-    return multiplication;
+updateDisplay();
+
+// Putting all the buttons into an array
+const buttons = Array.from(document.getElementsByClassName('buttons'));
+
+// Getting all the elements in the array
+buttons.map(button => {
+    //Adding the event listener
+    button.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (target.classList.contains('operator')) {
+            handleOperator(target.value);
+            updateDisplay();
+            return;
+        }
+        if (target.classList.contains('decimal')) {
+            decimal(target.value);
+            updateDisplay();
+            return;
+        }
+        if (target.classList.contains('clear')) {
+            clear();
+            updateDisplay();
+            return;
+        }
+        if (target.classList.contains('delete')) {
+            deleteKey();
+            updateDisplay();
+            return;
+        }
+
+        userInput(target.value);
+        updateDisplay();
+    });
+});
+
+//Function for adding the decimal
+function decimal(dot) {
+    if (calculator.waitingSecondOperand === true) {
+        calculator.displayValue = '0.'
+        calculator.waitingSecondOperand = false;
+        return;
+    }
+    if(!calculator.displayValue.includes(dot)) {
+        calculator.displayValue += dot;
+    }
 }
 
-function operate(number1, operator, number2) {
+// Function for handling all the operators
+function handleOperator(nextOp) {
+    //unpack properties from calculator
+    const { firstOperand, displayValue, operator } = calculator;
+
+    // Convert string to floating-point number
+    const inputValue = parseFloat(displayValue);
+
+    if (operator && calculator.waitingSecondOperand) {
+        calculator.operator = nextOp;
+        return;
+    }
+
+    if (firstOperand === null && !isNaN(inputValue)) {
+        calculator.firstOperand = inputValue;
+    }
+    else if (operator) {
+        const result = operate(firstOperand, operator, inputValue);
+
+        //Rounding result to 4 decimal points
+        calculator.displayValue = `${parseFloat(result.toFixed(4))}`; 
+        calculator.firstOperand = result;
+    }
+
+    calculator.waitingSecondOperand = true;
+    calculator.operator = nextOp;
+}
+
+// Function for clearing the display
+function clear() {
+    calculator.displayValue = '0';
+    calculator.firstOperand = null;
+    calculator.waitingSecondOperand = false;
+    calculator.operator = null;
+}
+
+// Function for deleting numbers one-at-a-time
+function deleteKey() {
+    calculator.displayValue = calculator.displayValue.slice(0, -1);
+
+    if (calculator.displayValue === '') {
+        calculator.displayValue = '0';
+    }
+}
+
+// Function for making calculations
+function operate(firstOperand, operator, secondOperand) {
     switch(operator) {
         case '+':
-            return add(number1, number2);
+            return firstOperand + secondOperand;
         case '-':
-            return substract(number1, number2);
+            return firstOperand - secondOperand;
         case '/':
-            return divide(number1, number2);
+            return firstOperand / secondOperand;
         case '*':
-            return multiply(number1, number2);
+            return firstOperand * secondOperand;
     }
+
+    return secondOperand;
 }
 
-let display = document.getElementById('display');
-let buttons = Array.from(document.getElementsByClassName('button'));
-
-buttons.map(button => {
-    button.addEventListener('click', element => {
-        calculate(element);
-    })
-})
-
-function calculate(elem) {
-
-    if (display.innerText == '0') {
-        display.innerText = '';
-    }
-
-    switch (elem.target.innerText) {
-        case 'AC':
-            display.innerText = '0';
-            break;
-        case 'DEL':
-            if (display.innerText != 'Error') {
-                display.innerText = display.innerText.slice(0, -1);
-            }
-            if (display.innerText == '') {
-                display.innerText = '0';
-            }
-            break;
-        case '=':
-            try {
-                display.innerText = eval(display.innerText);
-            }
-            catch {
-                display.innerText = 'Error';
-             }
-            break;
-        case '.':
-            if(!display.innerText.includes('.')) {
-                display.innerText += '.';
-            }
-            break;
-        default:
-            display.innerText += elem.target.innerText; // += means add a new value to the value that already existed
-            break;
-    }
-}
-
-// Trying to escape eval() 
-function equal() {
-    let split1 = display.innerText.split('-');
-    let split2 = display.innerText.split('+');
-    let split3 = display.innerText.split('*');
-    let split4 = display.innerText.split('/');
-    let firstValue = parseFloat(split1[0] || split2[0] || split3[0] || split4[0]);
-    let secondValue = parseFloat(split1[1] || split2[1] || split3[1] || split4[1]);
-    
-    if (operators.includes[display.innerText]) {
-
-        console.log(operators);
-    }
-
-    console.log(firstValue);
-    console.log(secondValue);
-
-    // let split = display.innerText.split(buttons.includes(display.innerText));
-
-    // console.log(split[0]);
-}
